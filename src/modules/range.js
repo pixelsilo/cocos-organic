@@ -8,10 +8,12 @@
 //         [data-range-fill]                    progress bar fill, width driven here
 //     .w-dyn-item                              list item wrapping a [data-range="Coconut Yog"] card
 //
-// Autoplay advances to the next tab once the fill completes. It pauses on hover/focus
-// and stops for good after the visitor picks a tab or if they prefer reduced motion.
+// Autoplay advances to the next tab once the fill completes. Hovering or focusing the
+// section does NOT pause it; only picking a tab does. The picked tab then holds (fill
+// full) for HOLD_MS and autoplay restarts from zero. Reduced motion disables autoplay.
 
 const AUTOPLAY_MS = 8000;
+const HOLD_MS = 10000;
 
 export default function range(root) {
   const tabs = [...root.querySelectorAll('[data-range-tab]')];
@@ -20,8 +22,9 @@ export default function range(root) {
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let current = 0;
-  let autoplay = !reduceMotion;
-  let paused = false;
+  const autoplay = !reduceMotion;
+  let held = false;
+  let holdTimer = 0;
   let inView = true;
   let elapsed = 0;
   let last = 0;
@@ -39,7 +42,7 @@ export default function range(root) {
       tab.tabIndex = on ? 0 : -1;
       labelOf(tab)?.classList.toggle('is-inactive', !on);
       const fill = fillOf(tab);
-      if (fill) fill.style.width = on && !autoplay ? '100%' : '0%';
+      if (fill) fill.style.width = on && (held || !autoplay) ? '100%' : '0%';
     });
     cards.forEach((card) => {
       const item = card.closest('.w-dyn-item') || card;
@@ -49,7 +52,7 @@ export default function range(root) {
   }
 
   function tick(now) {
-    if (autoplay && !paused && inView) {
+    if (autoplay && !held && inView) {
       // Cap the step so a throttled frame (background tab) can't skip ahead
       elapsed += Math.min(now - (last || now), 100);
       const fill = fillOf(tabs[current]);
@@ -60,10 +63,16 @@ export default function range(root) {
     raf = requestAnimationFrame(tick);
   }
 
+  function release() {
+    held = false;
+    show(current); // fill back to 0, timer restarts
+  }
+
   function choose(index) {
-    autoplay = false;
-    cancelAnimationFrame(raf);
+    clearTimeout(holdTimer);
+    held = true;
     show(index);
+    if (autoplay) holdTimer = setTimeout(release, HOLD_MS);
   }
 
   tabs.forEach((tab, i) => {
@@ -81,9 +90,6 @@ export default function range(root) {
       }
     });
   });
-
-  ['mouseenter', 'focusin'].forEach((t) => root.addEventListener(t, () => (paused = true)));
-  ['mouseleave', 'focusout'].forEach((t) => root.addEventListener(t, () => (paused = false)));
 
   // Only run the progress while the section is on screen
   if ('IntersectionObserver' in window) {
