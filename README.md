@@ -20,6 +20,10 @@ Then open the Webflow site (published or `webflow.io`) with `?dev` on the URL. T
 - Opt-in modules live in `src/modules/`, are registered in `MODULES`, and mount on `[data-module="<name>"]`. A module is `export default function (root) {}` and only queries inside `root`.
 - `data-ready` on a root means it has been initialised.
 
+## Modules
+
+- **`alert`** (`src/modules/alert.js`): dismissible alert bar in the `navigation` component. Root is `.alert[data-module="alert"]`, the close button has `data-alert-close`. Dismissal is stored in `localStorage` for 180 days. By default a changed message re-shows the bar; set `data-alert-version="2"` on the root to control that explicitly (then wording tweaks don't re-show it, and bumping the version does). The bar is hidden by CSS and revealed with `.is-visible`; the module sets it explicitly both ways.
+
 ## Release
 
 ```bash

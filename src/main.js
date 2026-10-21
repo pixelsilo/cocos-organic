@@ -1,11 +1,12 @@
 import copyrightYear from './global/copyright-year.js';
 import navScrolled from './global/nav-scrolled.js';
+import alertBar from './modules/alert.js';
 
 // Site-wide behaviour that runs on every page
 const GLOBALS = [copyrightYear, navScrolled];
 
 // Opt-in modules, mounted on [data-module="<name>"] roots
-const MODULES = {};
+const MODULES = { alert: alertBar };
 
 function boot() {
   GLOBALS.forEach((init) => {
