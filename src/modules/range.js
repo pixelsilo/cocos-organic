@@ -71,9 +71,11 @@ export default function range(root) {
       list.style.height = 'auto';
       const toHeight = list.getBoundingClientRect().height;
       list.style.height = `${fromHeight}px`;
+      // Longer glides for bigger changes: 0.5s for a few px up to 0.9s for ~800px+
+      const glide = Math.min(0.9, 0.5 + Math.abs(toHeight - fromHeight) / 2000);
       gsap.to(list, {
         height: toHeight,
-        duration: 0.5,
+        duration: glide,
         ease: 'power2.inOut',
         onComplete: () => (list.style.height = ''),
       });
