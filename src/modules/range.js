@@ -22,6 +22,7 @@ export default function range(root) {
   let current = 0;
   let autoplay = !reduceMotion;
   let paused = false;
+  let inView = true;
   let elapsed = 0;
   let last = 0;
   let raf = 0;
@@ -48,8 +49,9 @@ export default function range(root) {
   }
 
   function tick(now) {
-    if (autoplay && !paused) {
-      elapsed += now - (last || now);
+    if (autoplay && !paused && inView) {
+      // Cap the step so a throttled frame (background tab) can't skip ahead
+      elapsed += Math.min(now - (last || now), 100);
       const fill = fillOf(tabs[current]);
       if (fill) fill.style.width = `${Math.min(elapsed / AUTOPLAY_MS, 1) * 100}%`;
       if (elapsed >= AUTOPLAY_MS) show((current + 1) % tabs.length);
@@ -82,6 +84,11 @@ export default function range(root) {
 
   ['mouseenter', 'focusin'].forEach((t) => root.addEventListener(t, () => (paused = true)));
   ['mouseleave', 'focusout'].forEach((t) => root.addEventListener(t, () => (paused = false)));
+
+  // Only run the progress while the section is on screen
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(([entry]) => (inView = entry.isIntersecting)).observe(root);
+  }
 
   show(0);
   if (autoplay) raf = requestAnimationFrame(tick);
