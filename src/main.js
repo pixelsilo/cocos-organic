@@ -1,7 +1,9 @@
+import './styles/base.css'; // emitted as dist/site.css
 import copyrightYear from './global/copyright-year.js';
+import navScrolled from './global/nav-scrolled.js';
 
 // Site-wide behaviour that runs on every page
-const GLOBALS = [copyrightYear];
+const GLOBALS = [copyrightYear, navScrolled];
 
 // Opt-in modules, mounted on [data-module="<name>"] roots
 const MODULES = {};

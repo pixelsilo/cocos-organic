@@ -1,0 +1,84 @@
+<!--
+  Verbatim backup of the two HTML embeds that lived in the Webflow "code-snippets"
+  component (hidden block at the top of every page): code_js, then code_css.
+  Replaced by src/global/nav-scrolled.js and src/styles/base.css.
+-->
+
+<!-- code_js -->
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Select the elements
+    const elements = document.querySelectorAll(".navbar, .nav_button, .nav-link, .menu_lottie, .fs_nav, .navbar_static_background");
+
+    // Track the state so we don't spam the DOM
+    let isScrolled = false;
+
+    function toggleScrolledClass() {
+      const scrollPos = window.scrollY;
+      const threshold = 20; // Increased slightly to stop the "flick"
+
+      if (scrollPos > threshold && !isScrolled) {
+        elements.forEach(el => el.classList.add("scrolled"));
+        isScrolled = true;
+      } else if (scrollPos <= threshold && isScrolled) {
+        elements.forEach(el => el.classList.remove("scrolled"));
+        isScrolled = false;
+      }
+    }
+
+    // Run once on load
+    toggleScrolledClass();
+
+    // Listen for scroll
+    window.addEventListener("scroll", toggleScrolledClass, { passive: true });
+  });
+</script>
+
+<!-- code_css -->
+<!-- responsive sizing -->
+<style>
+  html { font-size: calc(0.5625rem + 0.41666666666666663vw); }
+  @media screen and (max-width:1920px) { html { font-size: calc(0.5625rem + 0.41666666666666674vw); } }
+  @media screen and (max-width:1440px) { html { font-size: calc(0.7501951092611863rem + 0.20811654526534862vw); } }
+  @media screen and (max-width:479px) { html { font-size: calc(0.7497384937238494rem + 0.41841004184100417vw); } }
+</style>
+<!-- utility styles -->
+<style>
+* {
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
+}
+.w-richtext>:first-child {
+	margin-top: 0;
+}
+.w-richtext>:last-child, .w-richtext ol li:last-child, .w-richtext ul li:last-child {
+  margin-bottom: 0;
+}
+a,
+.w-tab-link,
+.w-nav-link,
+.w-dropdown-btn,
+.w-dropdown-toggle,
+.w-dropdown-link
+{
+color: inherit;
+}
+main:focus-visible {
+  outline: -webkit-focus-ring-color auto 0px;
+}
+.form-input {
+     -webkit-appearance: none;
+}
+.w-slider-dot {
+  background: #dbdbdb;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-left: 0px !important;
+  margin-bottom: 0px !important;
+  margin-right: 0px !important;
+  transition: background 600ms cubic-bezier(.23, 1, .32, 1);
+}
+.w-slider-dot.w-active {
+  background: #0095ff;
+}
+</style>
