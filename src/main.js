@@ -2,6 +2,7 @@ import copyrightYear from './global/copyright-year.js';
 import navScrolled from './global/nav-scrolled.js';
 import formPlaceholders from './global/form-placeholders.js';
 import reveal from './global/reveal.js';
+import accordion from './modules/accordion.js';
 import alertBar from './modules/alert.js';
 import range from './modules/range.js';
 import marquee from './modules/marquee.js';
@@ -11,7 +12,7 @@ import stockistSearch from './modules/stockist-search.js';
 const GLOBALS = [copyrightYear, navScrolled, formPlaceholders, reveal];
 
 // Opt-in modules, mounted on [data-module="<name>"] roots
-const MODULES = { alert: alertBar, range, marquee, 'stockist-search': stockistSearch };
+const MODULES = { accordion, alert: alertBar, range, marquee, 'stockist-search': stockistSearch };
 
 function boot() {
   GLOBALS.forEach((init) => {

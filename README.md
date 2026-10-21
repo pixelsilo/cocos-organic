@@ -26,6 +26,9 @@ Then open the Webflow site (published or `webflow.io`) with `?dev` on the URL. T
 
 ## Motion (GSAP)
 
+- **`accordion`** (`src/modules/accordion.js`): smooth open/close for native `<details>` (the FAQ). Root is `[data-module="accordion"]` (on the FAQ Collection List); each row is `details > summary + answer`. Needs GSAP and no reduced motion, otherwise the native behaviour is untouched. The native `name` group is moved to `data-accordion-group` so opening one row closes the others with an animation, and a closing row gets `[data-closing]` so the icon CSS flips straight away.
+
+
 Uses the GSAP and ScrollTrigger that Webflow already loads (`window.gsap`), nothing is bundled. Without GSAP, or under `prefers-reduced-motion`, content is simply shown.
 
 - **Scroll reveal** (`src/global/reveal.js`): `data-reveal="group"` on a container fades up its direct children, staggered (use it on CMS Collection Lists); `data-reveal="item"` fades up the element itself. Tune with `data-reveal-y` (rem), `-duration`, `-stagger`, `-delay` (seconds), `-ease` and `-start` (ScrollTrigger start, default `top 85%`). Currently on the range, reviews, trust points and recipes lists.
