@@ -11,6 +11,10 @@
 // Autoplay advances to the next tab once the fill completes. Hovering or focusing the
 // section does NOT pause it; only picking a tab does. The picked tab then holds (fill
 // full) for HOLD_MS and autoplay restarts from zero. Reduced motion disables autoplay.
+//
+// Switching ranges animates the list height from the old set to the new one, so the
+// content below glides instead of jumping (the sets can differ a lot when stacked on
+// mobile, so locking to the tallest height would leave a big gap).
 
 import { animateIn, animateOut, canAnimate } from '../lib/motion.js';
 
@@ -34,6 +38,7 @@ export default function range(root) {
 
   const items = cards.map((card) => card.closest('.w-dyn-item') || card);
   const group = items[0].closest('[data-reveal]'); // scroll reveal wrapper, if the list has one
+  const list = items[0].parentElement;
   let shown = null; // range currently on screen
   let swapId = 0; // invalidates an in-flight card transition
 
@@ -49,14 +54,30 @@ export default function range(root) {
     shown = name;
 
     if (!animate || previous === null || previous === name || !canAnimate()) {
+      if (typeof window.gsap !== 'undefined') window.gsap.killTweensOf(list);
+      list.style.height = ''; // drop any height a superseded transition left behind
       apply();
       return;
     }
     group?.setAttribute('data-reveal-done', ''); // the scroll reveal must not replay over this
+    const gsap = window.gsap;
+    gsap.killTweensOf(list);
+    const fromHeight = list.getBoundingClientRect().height;
+    list.style.height = `${fromHeight}px`; // freeze while the old cards fade out
     animateOut(items.filter((item) => !item.hidden)).then(() => {
       if (id !== swapId) return; // a newer pick took over
       apply();
-      animateIn(next, { y: 1, duration: 0.7, stagger: 0.08 });
+      // New natural height, measured without painting, then glide there from the old one
+      list.style.height = 'auto';
+      const toHeight = list.getBoundingClientRect().height;
+      list.style.height = `${fromHeight}px`;
+      gsap.to(list, {
+        height: toHeight,
+        duration: 0.5,
+        ease: 'power2.inOut',
+        onComplete: () => (list.style.height = ''),
+      });
+      animateIn(next, { y: 1, duration: 0.7, stagger: 0.08, delay: 0.1 });
     });
   }
 
