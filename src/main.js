@@ -1,13 +1,14 @@
 import copyrightYear from './global/copyright-year.js';
 import navScrolled from './global/nav-scrolled.js';
 import formPlaceholders from './global/form-placeholders.js';
+import reveal from './global/reveal.js';
 import alertBar from './modules/alert.js';
 import range from './modules/range.js';
 import marquee from './modules/marquee.js';
 import stockistSearch from './modules/stockist-search.js';
 
 // Site-wide behaviour that runs on every page
-const GLOBALS = [copyrightYear, navScrolled, formPlaceholders];
+const GLOBALS = [copyrightYear, navScrolled, formPlaceholders, reveal];
 
 // Opt-in modules, mounted on [data-module="<name>"] roots
 const MODULES = { alert: alertBar, range, marquee, 'stockist-search': stockistSearch };

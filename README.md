@@ -24,6 +24,14 @@ Then open the Webflow site (published or `webflow.io`) with `?dev` on the URL. T
 
 - **`alert`** (`src/modules/alert.js`): dismissible alert bar in the `navigation` component. Root is `.alert[data-module="alert"]`, the close button has `data-alert-close`. Dismissal is stored in `localStorage` for 180 days. By default a changed message re-shows the bar; set `data-alert-version="2"` on the root to control that explicitly (then wording tweaks don't re-show it, and bumping the version does). The bar is hidden by CSS and revealed with `.is-visible`; the module sets it explicitly both ways.
 
+## Motion (GSAP)
+
+Uses the GSAP and ScrollTrigger that Webflow already loads (`window.gsap`), nothing is bundled. Without GSAP, or under `prefers-reduced-motion`, content is simply shown.
+
+- **Scroll reveal** (`src/global/reveal.js`): `data-reveal="group"` on a container fades up its direct children, staggered (use it on CMS Collection Lists); `data-reveal="item"` fades up the element itself. Tune with `data-reveal-y` (rem), `-duration`, `-stagger`, `-delay` (seconds), `-ease` and `-start` (ScrollTrigger start, default `top 85%`). Currently on the range, reviews, trust points and recipes lists.
+- **Range tabs** (`src/modules/range.js`): switching tab fades the current cards out, then the new ones rise in, staggered.
+- **No flash:** the `code_css` embed adds `html.reveal-pending`, which pre-hides `[data-reveal]` content until the module takes over (4s safety timeout). Shared helpers are in `src/lib/motion.js`.
+
 ## Release
 
 ```bash

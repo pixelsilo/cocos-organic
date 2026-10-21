@@ -12,6 +12,8 @@
 // section does NOT pause it; only picking a tab does. The picked tab then holds (fill
 // full) for HOLD_MS and autoplay restarts from zero. Reduced motion disables autoplay.
 
+import { animateIn, animateOut, canAnimate } from '../lib/motion.js';
+
 const AUTOPLAY_MS = 8000;
 const HOLD_MS = 10000;
 
@@ -30,10 +32,35 @@ export default function range(root) {
   let last = 0;
   let raf = 0;
 
+  const items = cards.map((card) => card.closest('.w-dyn-item') || card);
+  const group = items[0].closest('[data-reveal]'); // scroll reveal wrapper, if the list has one
+  let shown = null; // range currently on screen
+  let swapId = 0; // invalidates an in-flight card transition
+
   const fillOf = (tab) => tab.querySelector('[data-range-fill]');
   const labelOf = (tab) => tab.querySelector('.range_tab-label');
 
-  function show(index) {
+  // Swap the visible cards. Animated: current cards fade out, then the new ones rise in, staggered.
+  function swapCards(name, animate) {
+    const id = ++swapId;
+    const next = items.filter((_, k) => cards[k].dataset.range === name);
+    const apply = () => items.forEach((item) => (item.hidden = !next.includes(item)));
+    const previous = shown;
+    shown = name;
+
+    if (!animate || previous === null || previous === name || !canAnimate()) {
+      apply();
+      return;
+    }
+    group?.setAttribute('data-reveal-done', ''); // the scroll reveal must not replay over this
+    animateOut(items.filter((item) => !item.hidden)).then(() => {
+      if (id !== swapId) return; // a newer pick took over
+      apply();
+      animateIn(next, { y: 1, duration: 0.7, stagger: 0.08 });
+    });
+  }
+
+  function show(index, animate = false) {
     current = index;
     const name = tabs[index].dataset.rangeTab;
     tabs.forEach((tab, i) => {
@@ -44,10 +71,7 @@ export default function range(root) {
       const fill = fillOf(tab);
       if (fill) fill.style.width = on && (held || !autoplay) ? '100%' : '0%';
     });
-    cards.forEach((card) => {
-      const item = card.closest('.w-dyn-item') || card;
-      item.hidden = card.dataset.range !== name;
-    });
+    swapCards(name, animate);
     elapsed = 0;
   }
 
@@ -57,7 +81,7 @@ export default function range(root) {
       elapsed += Math.min(now - (last || now), 100);
       const fill = fillOf(tabs[current]);
       if (fill) fill.style.width = `${Math.min(elapsed / AUTOPLAY_MS, 1) * 100}%`;
-      if (elapsed >= AUTOPLAY_MS) show((current + 1) % tabs.length);
+      if (elapsed >= AUTOPLAY_MS) show((current + 1) % tabs.length, true);
     }
     last = now;
     raf = requestAnimationFrame(tick);
@@ -65,13 +89,13 @@ export default function range(root) {
 
   function release() {
     held = false;
-    show(current); // fill back to 0, timer restarts
+    show(current); // fill back to 0, timer restarts (same range, so no card change)
   }
 
   function choose(index) {
     clearTimeout(holdTimer);
     held = true;
-    show(index);
+    show(index, true);
     if (autoplay) holdTimer = setTimeout(release, HOLD_MS);
   }
 
