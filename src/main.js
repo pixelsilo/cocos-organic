@@ -3,12 +3,13 @@ import navScrolled from './global/nav-scrolled.js';
 import alertBar from './modules/alert.js';
 import range from './modules/range.js';
 import marquee from './modules/marquee.js';
+import stockistSearch from './modules/stockist-search.js';
 
 // Site-wide behaviour that runs on every page
 const GLOBALS = [copyrightYear, navScrolled];
 
 // Opt-in modules, mounted on [data-module="<name>"] roots
-const MODULES = { alert: alertBar, range, marquee };
+const MODULES = { alert: alertBar, range, marquee, 'stockist-search': stockistSearch };
 
 function boot() {
   GLOBALS.forEach((init) => {
