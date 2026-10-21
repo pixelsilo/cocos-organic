@@ -9,15 +9,19 @@
 // Without GSAP, or under prefers-reduced-motion, nothing here runs and the browser's own
 // details behaviour (including the exclusive `name` group) is used unchanged.
 //
-// With GSAP: the answer's height and opacity are tweened, and a row that is closing gets
-// [data-closing] so the stylesheet can flip its icon straight away rather than at the end.
+// With GSAP: the answer's height, padding, margin and opacity are tweened. Padding and margin
+// have to go too (the FAQ answer has bottom padding and a negative top margin), or the row
+// floors at that spacing and snaps when it opens or finishes closing. A row that is closing
+// gets [data-closing] so the stylesheet can flip its icon straight away rather than at the end.
 // The native `name` is moved to data-accordion-group so the browser doesn't snap the
 // other row shut; the group is enforced here with an animated close instead.
 
 import { canAnimate } from '../lib/motion.js';
 
-const OPEN_S = 0.5;
-const CLOSE_S = 0.35;
+// Same duration and ease both ways, so when one row opens as another closes the page below
+// moves by the difference of two matching curves instead of wobbling
+const DURATION = 0.45;
+const EASE = 'power2.inOut';
 
 export default function accordion(root) {
   const items = [...root.querySelectorAll('details')];
@@ -26,7 +30,23 @@ export default function accordion(root) {
   const gsap = window.gsap;
   const contentOf = (d) => d.querySelector('summary')?.nextElementSibling;
   const isOpen = (d) => d.hasAttribute('open') && !d.hasAttribute('data-closing');
-  const reset = (c) => gsap.set(c, { clearProps: 'height,opacity,overflow' });
+  const SPACING = ['paddingTop', 'paddingBottom', 'marginTop', 'marginBottom'];
+  const NONE = Object.fromEntries(SPACING.map((p) => [p, 0]));
+  const reset = (c) => gsap.set(c, { clearProps: ['height', 'opacity', 'overflow', ...SPACING].join(',') });
+
+  // The answer's natural border-box height, padding and margin, read with any in-flight inline
+  // values set aside. The height is measured here because GSAP's own 'auto' target ignores the
+  // padding of a border-box element, which leaves the tween short and snaps when it finishes.
+  function natural(c) {
+    const props = ['height', ...SPACING];
+    const inline = Object.fromEntries(props.map((p) => [p, c.style[p]]));
+    props.forEach((p) => (c.style[p] = ''));
+    const computed = getComputedStyle(c);
+    const size = { height: c.getBoundingClientRect().height };
+    SPACING.forEach((p) => (size[p] = computed[p]));
+    props.forEach((p) => (c.style[p] = inline[p]));
+    return size;
+  }
 
   items.forEach((d) => {
     const group = d.getAttribute('name');
@@ -44,9 +64,10 @@ export default function accordion(root) {
     gsap.killTweensOf(c);
     gsap.to(c, {
       height: 0,
+      ...NONE,
       opacity: 0,
-      duration: CLOSE_S,
-      ease: 'power2.inOut',
+      duration: DURATION,
+      ease: EASE,
       onComplete() {
         d.removeAttribute('open');
         d.removeAttribute('data-closing');
@@ -63,9 +84,15 @@ export default function accordion(root) {
     d.setAttribute('open', '');
     c.style.overflow = 'hidden';
     gsap.killTweensOf(c);
-    const to = { height: 'auto', opacity: 1, duration: OPEN_S, ease: 'power2.out', onComplete: () => reset(c) };
+    const to = {
+      opacity: 1,
+      ...natural(c),
+      duration: DURATION,
+      ease: EASE,
+      onComplete: () => reset(c),
+    };
     if (wasOpen) gsap.to(c, to);
-    else gsap.fromTo(c, { height: 0, opacity: 0 }, to);
+    else gsap.fromTo(c, { height: 0, ...NONE, opacity: 0 }, to);
   }
 
   root.addEventListener('click', (e) => {

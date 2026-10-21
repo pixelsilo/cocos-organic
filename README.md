@@ -26,7 +26,7 @@ Then open the Webflow site (published or `webflow.io`) with `?dev` on the URL. T
 
 ## Motion (GSAP)
 
-- **`accordion`** (`src/modules/accordion.js`): smooth open/close for native `<details>` (the FAQ). Root is `[data-module="accordion"]` (on the FAQ Collection List); each row is `details > summary + answer`. Needs GSAP and no reduced motion, otherwise the native behaviour is untouched. The native `name` group is moved to `data-accordion-group` so opening one row closes the others with an animation, and a closing row gets `[data-closing]` so the icon CSS flips straight away.
+- **`accordion`** (`src/modules/accordion.js`): smooth open/close for native `<details>` (the FAQ). Root is `[data-module="accordion"]` (on the FAQ Collection List); each row is `details > summary + answer`. Needs GSAP and no reduced motion, otherwise the native behaviour is untouched. It tweens height, padding and margin together (answers can have padding and a negative margin) to a measured border-box height, with the same duration and ease both ways so swapping rows doesn't wobble. The native `name` group is moved to `data-accordion-group` so opening one row closes the others with an animation, and a closing row gets `[data-closing]` so the icon CSS flips straight away.
 
 
 Uses the GSAP and ScrollTrigger that Webflow already loads (`window.gsap`), nothing is bundled. Without GSAP, or under `prefers-reduced-motion`, content is simply shown.
