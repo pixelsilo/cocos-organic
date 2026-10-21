@@ -1,4 +1,3 @@
-import './styles/base.css'; // emitted as dist/site.css
 import copyrightYear from './global/copyright-year.js';
 import navScrolled from './global/nav-scrolled.js';
 
