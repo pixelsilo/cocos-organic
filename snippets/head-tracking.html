@@ -1,0 +1,66 @@
+<!--
+  Backup of the Site settings > Custom code > Head block, as inherited from the
+  Pixel Silo starter template. Removed from Webflow when this repo was set up.
+  All IDs are still the template's CHANGEME placeholders.
+  Re-add (with real IDs) to Site settings > Custom code > Head when tracking and
+  consent are ready. Keep this in the head: the CMP must load before the other tags.
+-->
+
+<!-- CMP  -->
+<link rel='preconnect' href='//privacy-proxy.usercentrics.eu'>
+<link rel='preload' href='//privacy-proxy.usercentrics.eu/latest/uc-block.bundle.js' as='script'>
+<script type='application/javascript' src='https://privacy-proxy.usercentrics.eu/latest/uc-block.bundle.js'></script>
+<script id='usercentrics-cmp'
+  src='https://app.usercentrics.eu/browser-ui/latest/loader.js'
+  data-settings-id='CHANGEME'
+  async>
+</script>
+<script>
+  uc.setCustomTranslations('https://termageddon.ams3.cdn.digitaloceanspaces.com/translations/');
+</script>
+
+<!-- Google tag (gtag.js) + Ads -->
+<script
+  type="text/plain"
+  data-usercentrics="Google Analytics"
+  async
+  src="https://www.googletagmanager.com/gtag/js?id=G-CHANGEME">
+</script>
+<script
+  type="text/plain"
+  data-usercentrics="Google Analytics">
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-CHANGEME');
+  gtag('config', 'AW-CHANGEME');
+</script>
+
+<!-- Microsoft Clarity -->
+<script
+  type="text/plain"
+  data-usercentrics="Microsoft Clarity">
+  (function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r); t.async=1;
+    t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t,y);
+  })(window, document, "clarity", "script", "CHANGEME");
+</script>
+
+<!-- Meta Pixel Code -->
+<script
+  type="text/plain"
+  data-usercentrics="Facebook Pixel">
+  !function(f,b,e,v,n,t,s){
+    if(f.fbq)return; n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n; n.push=n; n.loaded=!0; n.version='2.0';
+    n.queue=[]; t=b.createElement(e); t.async=!0;
+    t.src=v; s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)
+  }(window, document,'script','https://connect.facebook.net/en_US/fbevents.js');
+
+  fbq('init', 'CHANGEME');
+  fbq('track', 'PageView');
+</script>

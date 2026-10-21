@@ -1,0 +1,9 @@
+<!--
+  Original Site settings > Custom code > Footer block from the starter template.
+  Replaced by src/global/copyright-year.js (same [copyright="year"] attribute).
+-->
+<!--- Copyright Year --->
+<script>
+for (const e of document.querySelectorAll('[copyright="year"]'))
+  e.textContent = new Date().getFullYear()
+</script>
