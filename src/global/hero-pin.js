@@ -1,22 +1,18 @@
-// Keeps the pinned hero flush under the sticky navigation.
+// Publishes the sticky navigation's height as --nav-h so the pinned hero can sit flush under it.
 //
 // The hero sits in a tall runway ([data-hero-runway]) and sticks below the nav, which is
-// the nav bar plus the dismissible alert. When the alert is closed (or the nav changes
-// height at another breakpoint) the nav gets shorter, so the hero's sticky offset and
-// height follow it instead of leaving a gap. Webflow's 134px is the fallback until this runs.
+// the nav bar plus the dismissible alert. The code_css embed reads the variable
+// (top: var(--nav-h, 0px); height: calc(100vh - var(--nav-h, 0px))). When the alert is
+// closed, or the nav changes height at another breakpoint, the variable follows it, so there
+// is never a gap. Without this script (the Designer canvas) the variable is unset, which
+// falls back to 0px, so the hero simply sits directly under the nav.
 
 export default function heroPin() {
   const nav = document.querySelector('.navigation');
-  const hero = document.querySelector('[data-hero-runway] > *');
-  if (!nav || !hero) return;
-  // Reduced motion un-pins the hero in CSS, so leave its layout alone
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (!nav) return;
 
-  const apply = () => {
-    const offset = Math.round(nav.getBoundingClientRect().height);
-    hero.style.top = `${offset}px`;
-    hero.style.height = `calc(100vh - ${offset}px)`;
-  };
+  const root = document.documentElement;
+  const apply = () => root.style.setProperty('--nav-h', `${Math.round(nav.getBoundingClientRect().height)}px`);
 
   apply();
   if (typeof ResizeObserver !== 'undefined') new ResizeObserver(apply).observe(nav);
