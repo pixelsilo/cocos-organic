@@ -86,6 +86,7 @@ export default function faqSearch(root) {
   links.forEach((l) =>
     l.addEventListener('click', (e) => {
       e.preventDefault();
+      e.stopPropagation(); // Webflow's own in-page link handler would otherwise scroll the group flush to the top, behind the nav
       jump(l.dataset.faqLink, true);
       history.replaceState(null, '', '#' + l.dataset.faqLink);
     })
@@ -95,7 +96,11 @@ export default function faqSearch(root) {
 
   search();
 
-  // Arriving on /faq#storage: the browser's own jump runs before --nav-h is set, so redo it
+  // Arriving on /faq#storage: the browser's own jump (and Webflow's, a moment later) runs without the
+  // nav offset, so redo it once --nav-h is set and again after Webflow has had its turn
   const slug = window.location.hash.slice(1);
-  if (slug) requestAnimationFrame(() => jump(slug, false));
+  if (slug) {
+    requestAnimationFrame(() => jump(slug, false));
+    setTimeout(() => jump(slug, false), 900);
+  }
 }
