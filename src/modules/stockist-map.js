@@ -19,7 +19,7 @@
 
 const LEAFLET = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet';
 const CLUSTER = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/';
-const TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+const TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const UK = { center: [54.2, -2.5], zoom: 5 };
 const PAGE = 12;
 const NEAR_ZOOM = 11;
@@ -145,8 +145,7 @@ export default async function stockistMap(root) {
   const L = window.L;
   const map = L.map(mapEl, { scrollWheelZoom: false }).setView(UK.center, UK.zoom);
   L.tileLayer(TILES, {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    subdomains: 'abcd',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 19,
   }).addTo(map);
 
