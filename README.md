@@ -35,7 +35,7 @@ Then open the Webflow site (published or `webflow.io`) with `?dev` on the URL. T
 | `split="words"` | `split=words` | heading text splits into words that rise and fade in, staggered |
 | `split="chars"` | `split=chars` | the same per letter (short headings only) |
 
-All fire once at `top 85%` of the viewport and are set to not animate under `prefers-reduced-motion`. A new section: add `slide="item"` to the section and `split="words"` to its heading, nothing else. Edit timing/easing in the Interactions panel (one place for the whole site). Debug markers are off (the starter template shipped them on).
+All four start at `top 85%` of the viewport and end at `bottom top`, with the start clamp off. That range matters: the template's original `start = end = top 85%` with clamp on meant anything already past that line at load (the hero title, the first section) never played, because ScrollTrigger only fires when a trigger is crossed or already inside its range. They fire once, and are set to not animate under `prefers-reduced-motion`. Webflow also ships its own CSS that keeps these elements hidden until the interactions runtime starts (so no flash), only for visitors without reduced motion. A new section: add `slide="item"` to the section and `split="words"` to its heading, nothing else. Edit timing/easing in the Interactions panel (one place for the whole site). Debug markers are off (the starter template shipped them on).
 
 **GSAP in JS** (the GSAP and ScrollTrigger Webflow already loads, nothing bundled) is only used where interactions can't express the behaviour:
 
