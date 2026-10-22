@@ -2,6 +2,7 @@ import copyrightYear from './global/copyright-year.js';
 import navScrolled from './global/nav-scrolled.js';
 import formPlaceholders from './global/form-placeholders.js';
 import heroPin from './global/hero-pin.js';
+import opticalFields from './global/optical-fields.js';
 import accordion from './modules/accordion.js';
 import alertBar from './modules/alert.js';
 import range from './modules/range.js';
@@ -10,7 +11,7 @@ import stockistSearch from './modules/stockist-search.js';
 import stockistMap from './modules/stockist-map.js';
 
 // Site-wide behaviour that runs on every page
-const GLOBALS = [copyrightYear, navScrolled, formPlaceholders, heroPin];
+const GLOBALS = [copyrightYear, navScrolled, formPlaceholders, heroPin, opticalFields];
 
 // Opt-in modules, mounted on [data-module="<name>"] roots
 const MODULES = { accordion, alert: alertBar, range, marquee, 'stockist-search': stockistSearch, 'stockist-map': stockistMap };
