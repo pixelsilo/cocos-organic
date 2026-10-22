@@ -1,0 +1,17 @@
+name = "cocos-stockists"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# Safety-net rebuild every 6 hours; the Webflow webhook does the instant refresh
+[triggers]
+crons = ["0 */6 * * *"]
+
+# Create with: npx wrangler kv namespace create LOCATIONS
+# then paste the id it prints below
+[[kv_namespaces]]
+binding = "LOCATIONS"
+id = "f8f934d607454c2ab0fb93e2e3a6d8be"
+
+# Secrets are set with `npx wrangler secret put <NAME>` and never committed:
+#   WEBFLOW_TOKEN  Webflow API token with CMS read access
+#   REFRESH_KEY    any long random string, used in the webhook URL
