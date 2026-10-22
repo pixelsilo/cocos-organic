@@ -3,7 +3,8 @@
 // Markup (inside the root, the page's main):
 //   [data-faq-input]               search field
 //   [data-faq-group="slug"]        one per category, wrapping that category's .faq_item rows (a CMS list)
-//   [data-faq-link="slug"]         category link in the side nav; gets .is-active while its group is in view
+//   [data-faq-link="slug"]         category link in the side nav (href="#slug"); gets .is-active while its group is in view,
+//                                  and scrolls its group in just below the sticky nav
 //   .faqpage_empty                 "no results" line; gets .is-shown when nothing matches
 //
 // A row matches when every word typed appears in its question or answer. Groups with no matching
@@ -40,6 +41,18 @@ export default function faqSearch(root) {
     track();
   }
 
+  // The sticky nav (alert bar included) sits over the top of the page and its height is published
+  // on <html> as --nav-h, so land the group's heading just below it
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  function jump(slug, smooth) {
+    const group = groups.find((g) => g.dataset.faqGroup === slug);
+    if (!group) return;
+    const nav = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 0;
+    const top = group.getBoundingClientRect().top + window.scrollY - nav - 32;
+    window.scrollTo({ top, behavior: smooth && !reduced.matches ? 'smooth' : 'auto' });
+    setActive(slug);
+  }
+
   function setActive(slug) {
     links.forEach((l) => l.classList.toggle('is-active', l.dataset.faqLink === slug));
   }
@@ -52,6 +65,8 @@ export default function faqSearch(root) {
     visible.forEach((g) => {
       if (g.getBoundingClientRect().top <= line) current = g;
     });
+    // The last groups can't scroll up to the line, so at the very bottom the final group wins
+    if (visible.length && window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) current = visible[visible.length - 1];
     if (current) setActive(current.dataset.faqGroup);
   }
 
@@ -68,9 +83,19 @@ export default function faqSearch(root) {
   input?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') e.preventDefault();
   });
-  links.forEach((l) => l.addEventListener('click', () => setActive(l.dataset.faqLink)));
+  links.forEach((l) =>
+    l.addEventListener('click', (e) => {
+      e.preventDefault();
+      jump(l.dataset.faqLink, true);
+      history.replaceState(null, '', '#' + l.dataset.faqLink);
+    })
+  );
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll);
 
   search();
+
+  // Arriving on /faq#storage: the browser's own jump runs before --nav-h is set, so redo it
+  const slug = window.location.hash.slice(1);
+  if (slug) requestAnimationFrame(() => jump(slug, false));
 }
