@@ -74,6 +74,23 @@ async function geocode(q) {
   return null;
 }
 
+// Arrow-right from the Figma icon set (same markup as the site's .button-icon embeds)
+const ARROW =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" fill="none" aria-hidden="true" style="display:block;width:100%;height:100%">' +
+  '<path d="M2.625 9.45C6 8.7 10.125 9.15 14.625 8.85" stroke="currentColor" stroke-width="1.3125" stroke-linecap="round" stroke-linejoin="round"/>' +
+  '<path d="M10.65 4.65C12.15 6.45 13.65 7.8 15.225 8.925C13.725 10.35 12.075 11.775 10.5 13.5" stroke="currentColor" stroke-width="1.3125" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+// Text link label + arrow, with the label in .text_optical so Kit Rounded sits centred
+function setLinkContent(a, text) {
+  const label = document.createElement('div');
+  label.className = 'text_optical';
+  label.textContent = text;
+  const icon = document.createElement('div');
+  icon.className = 'finder_link-icon';
+  icon.innerHTML = ARROW;
+  a.append(label, icon);
+}
+
 function row(loc, dist) {
   const li = document.createElement('div');
   li.className = 'finder_item';
@@ -92,11 +109,11 @@ function row(loc, dist) {
   a.rel = 'noopener';
   if (loc.y != null && loc.x != null) {
     a.href = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(`${loc.n} ${loc.a} ${loc.p}`);
-    a.textContent = 'Directions';
+    setLinkContent(a, 'Directions');
     li.append(a);
   } else if (loc.w && /^https?:\/\//.test(loc.w)) {
     a.href = loc.w;
-    a.textContent = 'Shop online';
+    setLinkContent(a, 'Shop online');
     li.append(a);
   }
   return li;
