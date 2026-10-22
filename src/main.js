@@ -10,12 +10,13 @@ import marquee from './modules/marquee.js';
 import stockistSearch from './modules/stockist-search.js';
 import stockistMap from './modules/stockist-map.js';
 import recipeFilter from './modules/recipe-filter.js';
+import faqSearch from './modules/faq-search.js';
 
 // Site-wide behaviour that runs on every page
 const GLOBALS = [copyrightYear, navScrolled, formPlaceholders, heroPin, opticalFields];
 
 // Opt-in modules, mounted on [data-module="<name>"] roots
-const MODULES = { accordion, alert: alertBar, range, marquee, 'stockist-search': stockistSearch, 'stockist-map': stockistMap, 'recipe-filter': recipeFilter };
+const MODULES = { accordion, alert: alertBar, range, marquee, 'stockist-search': stockistSearch, 'stockist-map': stockistMap, 'recipe-filter': recipeFilter, 'faq-search': faqSearch };
 
 function boot() {
   GLOBALS.forEach((init) => {
