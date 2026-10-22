@@ -50,8 +50,14 @@ export default function faqSearch(root) {
     const nav = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 0;
     const top = group.getBoundingClientRect().top + window.scrollY - nav - 32;
     window.scrollTo({ top, behavior: smooth && !reduced.matches ? 'smooth' : 'auto' });
+    picked = slug;
     setActive(slug);
   }
+
+  // A clicked link stays active until the visitor scrolls by hand. Storage and Trade sit at the very
+  // bottom, where the page can't scroll them up to the nav, so tracking alone would pick the wrong one
+  let picked = '';
+  ['wheel', 'touchstart', 'keydown'].forEach((type) => window.addEventListener(type, () => (picked = ''), { passive: true }));
 
   function setActive(slug) {
     links.forEach((l) => l.classList.toggle('is-active', l.dataset.faqLink === slug));
@@ -60,6 +66,7 @@ export default function faqSearch(root) {
   // The active group is the last visible one whose top has reached just under the sticky nav, which is
   // where a category link lands it
   function track() {
+    if (picked) return;
     const line = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 0) + 80;
     const visible = groups.filter((g) => !g.hidden);
     let current = visible[0];
