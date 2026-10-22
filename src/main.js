@@ -9,12 +9,13 @@ import range from './modules/range.js';
 import marquee from './modules/marquee.js';
 import stockistSearch from './modules/stockist-search.js';
 import stockistMap from './modules/stockist-map.js';
+import recipeFilter from './modules/recipe-filter.js';
 
 // Site-wide behaviour that runs on every page
 const GLOBALS = [copyrightYear, navScrolled, formPlaceholders, heroPin, opticalFields];
 
 // Opt-in modules, mounted on [data-module="<name>"] roots
-const MODULES = { accordion, alert: alertBar, range, marquee, 'stockist-search': stockistSearch, 'stockist-map': stockistMap };
+const MODULES = { accordion, alert: alertBar, range, marquee, 'stockist-search': stockistSearch, 'stockist-map': stockistMap, 'recipe-filter': recipeFilter };
 
 function boot() {
   GLOBALS.forEach((init) => {
