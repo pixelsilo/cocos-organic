@@ -46,6 +46,36 @@ async function loadGoogle(key) {
   if (!window.markerClusterer) await loadScript(CLUSTERER);
 }
 
+// Brand colours come from the site's own CSS variables, so the map follows the Webflow palette
+function brand() {
+  const cs = getComputedStyle(document.documentElement);
+  const v = (name, fallback) => cs.getPropertyValue(name).trim() || fallback;
+  return {
+    berry: v('--mixed-berry--strong', '#a25eb5'),
+    brown: v('--base--core-brown', '#4c3524'),
+    cream: v('--base--cream', '#f6f4f2'),
+    land: v('--base--placeholder', '#ebe4da'),
+    water: v('--natural--pastel', '#afd9f2'),
+    font: getComputedStyle(document.body).fontFamily,
+  };
+}
+
+// Quiet base map in the brand palette: warm land, pastel water, brown labels, no clutter
+function mapStyles(c) {
+  return [
+    { elementType: 'geometry', stylers: [{ color: c.land }] },
+    { elementType: 'labels.text.fill', stylers: [{ color: c.brown }] },
+    { elementType: 'labels.text.stroke', stylers: [{ color: c.cream }, { weight: 3 }] },
+    { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+    { featureType: 'water', elementType: 'geometry', stylers: [{ color: c.water }] },
+    { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+    { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ visibility: 'off' }] },
+    { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+    { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+    { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: c.brown }, { weight: 0.6 }, { lightness: 60 }] },
+  ];
+}
+
 function miles(a, b) {
   const rad = Math.PI / 180;
   const dLat = (b[0] - a[0]) * rad;
@@ -154,6 +184,7 @@ export default async function stockistMap(root) {
 
   const all = data.locations;
   const gm = window.google.maps;
+  const c = brand();
   const map = new gm.Map(mapEl, {
     center: { lat: UK.lat, lng: UK.lng },
     zoom: UK.zoom,
@@ -161,9 +192,42 @@ export default async function stockistMap(root) {
     mapTypeControl: false,
     streetViewControl: false,
     fullscreenControl: false,
+    styles: mapStyles(c),
   });
   const info = new gm.InfoWindow();
-  const clusterer = new window.markerClusterer.MarkerClusterer({ map, markers: [] });
+
+  // Pin: berry teardrop with a cream ring and a hole in the middle
+  const pin = {
+    path: 'M12 22C12 22 4.5 14.6 4.5 9.2C4.5 5 7.9 1.7 12 1.7C16.1 1.7 19.5 5 19.5 9.2C19.5 14.6 12 22 12 22ZM12 6.2A3 3 0 1 0 12 12.2A3 3 0 1 0 12 6.2Z',
+    fillColor: c.berry,
+    fillOpacity: 1,
+    strokeColor: c.cream,
+    strokeWeight: 1.5,
+    scale: 1.5,
+    anchor: new gm.Point(12, 22),
+  };
+
+  // Cluster: berry disc with a cream ring and cream count, bigger for bigger clusters
+  const clusterer = new window.markerClusterer.MarkerClusterer({
+    map,
+    markers: [],
+    renderer: {
+      render: ({ count, position }) =>
+        new gm.Marker({
+          position,
+          zIndex: 1000 + count,
+          icon: {
+            path: gm.SymbolPath.CIRCLE,
+            scale: Math.min(15 + Math.sqrt(count) * 1.6, 32),
+            fillColor: c.berry,
+            fillOpacity: 1,
+            strokeColor: c.cream,
+            strokeWeight: 3,
+          },
+          label: { text: String(count), color: c.cream, fontSize: '13px', fontWeight: '700', fontFamily: c.font },
+        }),
+    },
+  });
 
   // Current state
   let types = null; // null = all, else array of allowed types
@@ -181,9 +245,10 @@ export default async function stockistMap(root) {
     const markers = [];
     list.forEach(({ loc }) => {
       if (loc.y == null || loc.x == null) return;
-      const m = new gm.Marker({ position: { lat: loc.y, lng: loc.x }, title: loc.n });
+      const m = new gm.Marker({ position: { lat: loc.y, lng: loc.x }, title: loc.n, icon: pin });
       m.addListener('click', () => {
         const pop = document.createElement('div');
+        pop.style.cssText = `font-family:${c.font};color:${c.brown};font-size:14px;line-height:1.4;`;
         const b = document.createElement('strong');
         b.textContent = loc.n;
         pop.append(b, document.createElement('br'), document.createTextNode([loc.a, loc.c, loc.p].filter(Boolean).join(', ')));
