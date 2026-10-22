@@ -57,9 +57,10 @@ export default function faqSearch(root) {
     links.forEach((l) => l.classList.toggle('is-active', l.dataset.faqLink === slug));
   }
 
-  // The active group is the last visible one whose top has passed 40% of the viewport
+  // The active group is the last visible one whose top has reached just under the sticky nav, which is
+  // where a category link lands it
   function track() {
-    const line = window.innerHeight * 0.4;
+    const line = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 0) + 80;
     const visible = groups.filter((g) => !g.hidden);
     let current = visible[0];
     visible.forEach((g) => {
