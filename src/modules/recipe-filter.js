@@ -25,6 +25,9 @@ export default function recipeFilter(root) {
   const flavours = root.querySelector('[data-flavours]');
   const more = root.querySelector('[data-load-more]');
 
+  // The flavour row starts closed. Set here because Webflow does not publish a hidden attribute
+  if (flavours) flavours.hidden = true;
+
   let category = 'all';
   let colour = '';
   let shown = PAGE_SIZE;
