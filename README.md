@@ -31,7 +31,13 @@ Then open the Webflow site (published or `webflow.io`) with `?dev` on the URL. T
 
 Uses the GSAP and ScrollTrigger that Webflow already loads (`window.gsap`), nothing is bundled. Without GSAP, or under `prefers-reduced-motion`, content is simply shown.
 
-- **Scroll reveal** (`src/global/reveal.js`): `data-reveal="group"` on a container fades up its direct children, staggered (use it on CMS Collection Lists); `data-reveal="item"` fades up the element itself. Tune with `data-reveal-y` (rem), `-duration`, `-stagger`, `-delay` (seconds), `-ease` and `-start` (ScrollTrigger start, default `top 85%`). Currently on the range, reviews, trust points and recipes lists.
+- **Scroll reveal** (`src/global/reveal.js`), all attribute-driven, each element reveals once as it scrolls into view:
+  - `data-reveal="section"` on a section: the whole section slides up a little (2.5rem) and fades in.
+  - `data-reveal="group"` on a container (CMS Collection Lists, card grids): its direct children fade up, staggered.
+  - `data-reveal="item"` on any element: fades that element up.
+  - `data-reveal-text="words"` on a heading: each word rises and fades in, staggered, starting a beat after its section. `data-reveal-text="chars"` does it per letter (short headings only). Splitting is `src/lib/split.js` (Webflow doesn't ship SplitText): it keeps whitespace, line breaks and inline children, sets `aria-label` with the original text and `aria-hidden` on the spans.
+  - Tuning, all optional: `data-reveal-y` (rem; em for text), `-duration`, `-stagger`, `-delay` (seconds), `-ease`, `-start` (ScrollTrigger start, e.g. `top 85%`). Defaults per type are in `src/lib/motion.js`.
+  - Currently on: every Home section after the hero, the section headings, the hero title, the footer title, and the range, reviews, trust points and recipes lists. New section = add `data-reveal="section"`, and `data-reveal-text="words"` on its heading.
 - **Range tabs** (`src/modules/range.js`): switching tab fades the current cards out, then the new ones rise in, staggered. The list height glides from the old set to the new one so the content below never jumps (not locked to the tallest set, since stacked on mobile the sets differ by hundreds of px).
 - **No flash:** the `code_css` embed adds `html.reveal-pending`, which pre-hides `[data-reveal]` content until the module takes over (4s safety timeout). Shared helpers are in `src/lib/motion.js`.
 
