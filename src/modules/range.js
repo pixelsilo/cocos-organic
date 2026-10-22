@@ -37,7 +37,6 @@ export default function range(root) {
   let raf = 0;
 
   const items = cards.map((card) => card.closest('.w-dyn-item') || card);
-  const group = items[0].closest('[data-reveal]'); // scroll reveal wrapper, if the list has one
   const list = items[0].parentElement;
   let shown = null; // range currently on screen
   let swapId = 0; // invalidates an in-flight card transition
@@ -59,7 +58,6 @@ export default function range(root) {
       apply();
       return;
     }
-    group?.setAttribute('data-reveal-done', ''); // the scroll reveal must not replay over this
     const gsap = window.gsap;
     gsap.killTweensOf(list);
     const fromHeight = list.getBoundingClientRect().height;

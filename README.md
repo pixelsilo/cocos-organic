@@ -24,22 +24,23 @@ Then open the Webflow site (published or `webflow.io`) with `?dev` on the URL. T
 
 - **`alert`** (`src/modules/alert.js`): dismissible alert bar in the `navigation` component. Root is `.alert[data-module="alert"]`, the close button has `data-alert-close`. Dismissal is stored in `localStorage` for 180 days. By default a changed message re-shows the bar; set `data-alert-version="2"` on the root to control that explicitly (then wording tweaks don't re-show it, and bumping the version does). The bar is hidden by CSS and revealed with `.is-visible`; the module sets it explicitly both ways.
 
-## Motion (GSAP)
+## Motion
+
+**Scroll reveals are native Webflow interactions** (Interactions panel, site-wide, targeted by attribute so they work on any element on any page, no JS in this repo):
+
+| Attribute | Interaction | Effect |
+|---|---|---|
+| `slide="item"` | `slide=item` | the element rises 4rem and fades in (used on every Home section after the hero) |
+| `slide="children"` | `slide=children` | its direct children rise and fade in, staggered 0.2s (CMS Collection Lists, card grids) |
+| `split="words"` | `split=words` | heading text splits into words that rise and fade in, staggered |
+| `split="chars"` | `split=chars` | the same per letter (short headings only) |
+
+All fire once at `top 85%` of the viewport and are set to not animate under `prefers-reduced-motion`. A new section: add `slide="item"` to the section and `split="words"` to its heading, nothing else. Edit timing/easing in the Interactions panel (one place for the whole site). Debug markers are off (the starter template shipped them on).
+
+**GSAP in JS** (the GSAP and ScrollTrigger Webflow already loads, nothing bundled) is only used where interactions can't express the behaviour:
 
 - **`accordion`** (`src/modules/accordion.js`): smooth open/close for native `<details>` (the FAQ). Root is `[data-module="accordion"]` (on the FAQ Collection List); each row is `details > summary + answer`. Needs GSAP and no reduced motion, otherwise the native behaviour is untouched. It tweens height, padding and margin together (answers can have padding and a negative margin) to a measured border-box height, with the same duration and ease both ways so swapping rows doesn't wobble. The native `name` group is moved to `data-accordion-group` so opening one row closes the others with an animation, and a closing row gets `[data-closing]` so the icon CSS flips straight away.
-
-
-Uses the GSAP and ScrollTrigger that Webflow already loads (`window.gsap`), nothing is bundled. Without GSAP, or under `prefers-reduced-motion`, content is simply shown.
-
-- **Scroll reveal** (`src/global/reveal.js`), all attribute-driven, each element reveals once as it scrolls into view:
-  - `data-reveal="section"` on a section: the whole section slides up a little (2.5rem) and fades in.
-  - `data-reveal="group"` on a container (CMS Collection Lists, card grids): its direct children fade up, staggered.
-  - `data-reveal="item"` on any element: fades that element up.
-  - `data-reveal-text="words"` on a heading: each word rises and fades in, staggered, starting a beat after its section. `data-reveal-text="chars"` does it per letter (short headings only). Splitting is `src/lib/split.js` (Webflow doesn't ship SplitText): it keeps whitespace, line breaks and inline children, sets `aria-label` with the original text and `aria-hidden` on the spans.
-  - Tuning, all optional: `data-reveal-y` (rem; em for text), `-duration`, `-stagger`, `-delay` (seconds), `-ease`, `-start` (ScrollTrigger start, e.g. `top 85%`). Defaults per type are in `src/lib/motion.js`.
-  - Currently on: every Home section after the hero, the section headings, the hero title, the footer title, and the range, reviews, trust points and recipes lists. New section = add `data-reveal="section"`, and `data-reveal-text="words"` on its heading.
-- **Range tabs** (`src/modules/range.js`): switching tab fades the current cards out, then the new ones rise in, staggered. The list height glides from the old set to the new one so the content below never jumps (not locked to the tallest set, since stacked on mobile the sets differ by hundreds of px).
-- **No flash:** the `code_css` embed adds `html.reveal-pending`, which pre-hides `[data-reveal]` content until the module takes over (4s safety timeout). Shared helpers are in `src/lib/motion.js`.
+- **Range tabs** (`src/modules/range.js`): switching tab fades the current cards out, then the new ones rise in, staggered. The list height glides from the old set to the new one so the content below never jumps (not locked to the tallest set, since stacked on mobile the sets differ by hundreds of px). Shared helpers are in `src/lib/motion.js`.
 
 ## Release
 
