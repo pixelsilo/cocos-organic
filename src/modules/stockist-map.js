@@ -1,7 +1,8 @@
-// Stockists map: Leaflet map + nearest-first list, fed by the stockists Worker.
+// Stockists map: Google Map + nearest-first list, fed by the stockists Worker.
 //
 // Markup (inside the section):
 //   [data-module="stockist-map"]       root; data-api = the Worker's /locations.json URL
+//                                      data-maps-key = Google Maps JavaScript API key (HTTP-referrer restricted)
 //     [data-map]                       map container (needs a height)
 //     [data-list]                      results list container
 //     [data-input]                     text input (town or postcode)
@@ -15,12 +16,10 @@
 //
 // Selected chips/radius buttons get the class "is-active" and aria-pressed="true".
 // Reads ?q= from the URL (set by the stockist-search module on other pages).
-// Leaflet is loaded from cdnjs on this page only.
+// The Google Maps API and marker clusterer are loaded on this page only.
 
-const LEAFLET = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet';
-const CLUSTER = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/';
-const TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-const UK = { center: [54.2, -2.5], zoom: 5 };
+const CLUSTERER = 'https://unpkg.com/@googlemaps/markerclusterer@2.5.3/dist/index.min.js';
+const UK = { lat: 54.2, lng: -2.5, zoom: 5 };
 const PAGE = 12;
 const NEAR_ZOOM = 11;
 const DEFAULT_RADIUS = 10; // miles, used when no radius buttons exist
@@ -30,27 +29,21 @@ function loadScript(src) {
   return new Promise((resolve, reject) => {
     const s = document.createElement('script');
     s.src = src;
+    s.async = true;
     s.onload = resolve;
     s.onerror = () => reject(new Error('failed to load ' + src));
     document.head.appendChild(s);
   });
 }
 
-function loadStyle(href) {
-  if (document.querySelector(`link[href="${href}"]`)) return;
-  const l = document.createElement('link');
-  l.rel = 'stylesheet';
-  l.href = href;
-  document.head.appendChild(l);
-}
-
-async function loadLeaflet() {
-  if (window.L?.markerClusterGroup) return;
-  loadStyle(LEAFLET + '.min.css');
-  loadStyle(CLUSTER + 'MarkerCluster.css');
-  loadStyle(CLUSTER + 'MarkerCluster.Default.css');
-  if (!window.L) await loadScript(LEAFLET + '.min.js');
-  await loadScript(CLUSTER + 'leaflet.markercluster.js');
+async function loadGoogle(key) {
+  if (!window.google?.maps) {
+    await new Promise((resolve, reject) => {
+      window.__cocosMapsReady = resolve;
+      loadScript('https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(key) + '&callback=__cocosMapsReady&v=weekly').catch(reject);
+    });
+  }
+  if (!window.markerClusterer) await loadScript(CLUSTERER);
 }
 
 function miles(a, b) {
@@ -119,6 +112,7 @@ function setActive(group, active) {
 
 export default async function stockistMap(root) {
   const api = root.getAttribute('data-api');
+  const key = root.getAttribute('data-maps-key');
   const mapEl = root.querySelector('[data-map]');
   const listEl = root.querySelector('[data-list]');
   const input = root.querySelector('[data-input]');
@@ -128,29 +122,31 @@ export default async function stockistMap(root) {
   const more = root.querySelector('[data-more]');
   const chips = [...root.querySelectorAll('[data-filter]')];
   const radii = [...root.querySelectorAll('[data-radius]')];
-  if (!api || !mapEl || !listEl) return;
+  if (!api || !key || !mapEl || !listEl) return;
 
   const say = (t) => status && (status.textContent = t);
   say('Loading stockists…');
 
   let data;
   try {
-    [data] = await Promise.all([fetch(api).then((r) => r.json()), loadLeaflet()]);
+    [data] = await Promise.all([fetch(api).then((r) => r.json()), loadGoogle(key)]);
   } catch (err) {
     say('Sorry, we could not load the stockists. Please try again later.');
     throw err;
   }
 
   const all = data.locations;
-  const L = window.L;
-  const map = L.map(mapEl, { scrollWheelZoom: false }).setView(UK.center, UK.zoom);
-  L.tileLayer(TILES, {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    maxZoom: 19,
-  }).addTo(map);
-
-  const cluster = L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 50 });
-  map.addLayer(cluster);
+  const gm = window.google.maps;
+  const map = new gm.Map(mapEl, {
+    center: { lat: UK.lat, lng: UK.lng },
+    zoom: UK.zoom,
+    gestureHandling: 'cooperative',
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false,
+  });
+  const info = new gm.InfoWindow();
+  const clusterer = new window.markerClusterer.MarkerClusterer({ map, markers: [] });
 
   // Current state
   let types = null; // null = all, else array of allowed types
@@ -163,17 +159,23 @@ export default async function stockistMap(root) {
   const allowed = (loc) => !types || types.includes(loc.t);
 
   function drawPins(list) {
-    cluster.clearLayers();
+    clusterer.clearMarkers();
+    info.close();
+    const markers = [];
     list.forEach(({ loc }) => {
       if (loc.y == null || loc.x == null) return;
-      const m = L.marker([loc.y, loc.x], { title: loc.n });
-      const pop = document.createElement('div');
-      const b = document.createElement('strong');
-      b.textContent = loc.n;
-      pop.append(b, document.createElement('br'), document.createTextNode([loc.a, loc.c, loc.p].filter(Boolean).join(', ')));
-      m.bindPopup(pop);
-      cluster.addLayer(m);
+      const m = new gm.Marker({ position: { lat: loc.y, lng: loc.x }, title: loc.n });
+      m.addListener('click', () => {
+        const pop = document.createElement('div');
+        const b = document.createElement('strong');
+        b.textContent = loc.n;
+        pop.append(b, document.createElement('br'), document.createTextNode([loc.a, loc.c, loc.p].filter(Boolean).join(', ')));
+        info.setContent(pop);
+        info.open({ map, anchor: m });
+      });
+      markers.push(m);
     });
+    clusterer.addMarkers(markers);
   }
 
   function render(reset) {
@@ -202,8 +204,13 @@ export default async function stockistMap(root) {
         say(`Nothing within ${radius} miles of ${query}. Here are the nearest stockists.`);
       }
       drawPins(shown);
-      map.setView(point, NEAR_ZOOM);
-      if (shown.length) map.fitBounds(L.latLngBounds(shown.slice(0, PAGE).map(({ loc }) => [loc.y, loc.x]).concat([point])), { padding: [30, 30], maxZoom: 13 });
+      map.setCenter({ lat: point[0], lng: point[1] });
+      map.setZoom(NEAR_ZOOM);
+      if (shown.length) {
+        const bounds = new gm.LatLngBounds({ lat: point[0], lng: point[1] });
+        shown.slice(0, PAGE).forEach(({ loc }) => bounds.extend({ lat: loc.y, lng: loc.x }));
+        map.fitBounds(bounds, 40);
+      }
     } else if (query) {
       const needle = query.toLowerCase();
       shown = pool.filter((l) => [l.n, l.r, l.c, l.p].some((s) => s.toLowerCase().includes(needle))).map((loc) => ({ loc, dist: null }));
@@ -213,7 +220,8 @@ export default async function stockistMap(root) {
       shown = pool.map((loc) => ({ loc, dist: null }));
       say(`${shown.length} stockists across the UK`);
       drawPins(shown);
-      map.setView(UK.center, UK.zoom);
+      map.setCenter({ lat: UK.lat, lng: UK.lng });
+      map.setZoom(UK.zoom);
     }
     render(true);
   }
