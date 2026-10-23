@@ -1,0 +1,11 @@
+name = "cocos-newsletter"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# The Campaign Monitor list the e-book sign-up goes to. A list id is not a secret.
+# Paste it from Campaign Monitor: the list's "Change name and type" page, under "API subscriber list ID"
+[vars]
+CM_LIST_ID = "PASTE-LIST-ID-HERE"
+
+# Secrets are set with `npx wrangler secret put <NAME>` and never committed:
+#   CM_API_KEY   Campaign Monitor API key (Account settings > API keys)
