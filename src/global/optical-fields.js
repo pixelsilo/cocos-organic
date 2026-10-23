@@ -5,7 +5,7 @@
 // ignores text-box on <input>/<textarea>, so form controls are shifted here instead. The
 // script reads each control's real padding, so a new field needs no class, variable or rule.
 //
-//   text fields        typed text and placeholder move down 0.22em
+//   text fields        typed text and placeholder move down 0.22em (inputs, textareas and selects)
 //   submit / buttons   label moves down 0.315em
 //   checkbox labels    label text moves down 0.27em
 //
@@ -18,7 +18,7 @@ const BUTTON_SHIFT = 0.315;
 const LABEL_SHIFT = 0.27;
 
 const FIELDS =
-  'input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="range"]), textarea';
+  'input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="range"]), textarea, select';
 const LABELS = '.w-checkbox .w-form-label, .w-radio .w-form-label';
 
 function shiftField(el) {
