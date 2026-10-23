@@ -7,7 +7,7 @@
 //   [data-rich="method"]        <h3> starts a HowToSection, every <p> is a HowToStep
 //   [data-recipe-time]          text like "30 mins" or "1 hour 10 mins" becomes totalTime (ISO 8601)
 //   [data-recipe-category]      becomes recipeCategory
-//   [data-recipe-flavour]       becomes keywords (with "coconut yog recipe")
+//   [data-recipe-flavour]       its text (or attribute value) becomes keywords with "coconut yog recipe"
 
 const text = (el) => el.textContent.replace(/\s+/g, ' ').trim();
 
@@ -74,7 +74,9 @@ export default function schemaRecipe() {
   const category = document.querySelector('[data-recipe-category]')?.getAttribute('data-recipe-category');
   if (category) recipe.recipeCategory = category;
 
-  const flavour = document.querySelector('[data-recipe-flavour]')?.getAttribute('data-recipe-flavour');
+  // The flavour name is the element's own text unless the attribute carries a value
+  const flavourEl = document.querySelector('[data-recipe-flavour]');
+  const flavour = flavourEl && (flavourEl.getAttribute('data-recipe-flavour') || text(flavourEl));
   if (flavour) recipe.keywords = `coconut yog recipe, ${flavour}`;
 
   block.textContent = JSON.stringify(data);
