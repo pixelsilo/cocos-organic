@@ -43,12 +43,15 @@ export default function faqSearch(root) {
 
   // The sticky nav (alert bar included) sits over the top of the page and its height is published
   // on <html> as --nav-h, so land the group's heading just below it
+  // The nav height is measured, so it is already in the page's own rem-scaled pixels; the gaps below it
+  // are rem, read from the fluid root size, so they scale with the rest of the layout
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const rem = () => parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  const navHeight = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 0;
   function jump(slug, smooth) {
     const group = groups.find((g) => g.dataset.faqGroup === slug);
     if (!group) return;
-    const nav = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 0;
-    const top = group.getBoundingClientRect().top + window.scrollY - nav - 32;
+    const top = group.getBoundingClientRect().top + window.scrollY - navHeight() - 2 * rem();
     window.scrollTo({ top, behavior: smooth && !reduced.matches ? 'smooth' : 'auto' });
     picked = slug;
     setActive(slug);
@@ -67,7 +70,7 @@ export default function faqSearch(root) {
   // where a category link lands it
   function track() {
     if (picked) return;
-    const line = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 0) + 80;
+    const line = navHeight() + 5 * rem();
     const visible = groups.filter((g) => !g.hidden);
     let current = visible[0];
     visible.forEach((g) => {
