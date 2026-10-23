@@ -4,6 +4,8 @@ import formPlaceholders from './global/form-placeholders.js';
 import heroPin from './global/hero-pin.js';
 import opticalFields from './global/optical-fields.js';
 import hideEmpty from './global/hide-empty.js';
+import schemaRecipe from './global/schema-recipe.js';
+import schemaFaq from './global/schema-faq.js';
 import accordion from './modules/accordion.js';
 import alertBar from './modules/alert.js';
 import range from './modules/range.js';
@@ -15,7 +17,7 @@ import faqSearch from './modules/faq-search.js';
 import newsletter from './modules/newsletter.js';
 
 // Site-wide behaviour that runs on every page
-const GLOBALS = [copyrightYear, navScrolled, formPlaceholders, heroPin, opticalFields, hideEmpty];
+const GLOBALS = [copyrightYear, navScrolled, formPlaceholders, heroPin, opticalFields, hideEmpty, schemaRecipe, schemaFaq];
 
 // Opt-in modules, mounted on [data-module="<name>"] roots
 const MODULES = { accordion, alert: alertBar, range, marquee, 'stockist-search': stockistSearch, 'stockist-map': stockistMap, 'recipe-filter': recipeFilter, 'faq-search': faqSearch, newsletter };
