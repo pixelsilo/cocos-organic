@@ -18,7 +18,7 @@
 // Cloudflare Turnstile (form spam protection, strictly necessary) and Campaign Monitor
 // (newsletter sign-up, only after the visitor submits the form).
 
-const GA_ID = ''; // GA4 measurement ID, e.g. 'G-XXXXXXXXXX'. Empty keeps analytics off.
+const GA_ID = 'G-Z4ZBHR8YEB'; // GA4 measurement ID, e.g. 'G-XXXXXXXXXX'. Empty keeps analytics off.
 
 const DENIED = {
   ad_storage: 'denied',
