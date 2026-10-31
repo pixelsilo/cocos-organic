@@ -1,66 +1,30 @@
 <!--
-  Backup of the Site settings > Custom code > Head block, as inherited from the
-  Pixel Silo starter template. Removed from Webflow when this repo was set up.
-  All IDs are still the template's CHANGEME placeholders.
-  Re-add (with real IDs) to Site settings > Custom code > Head when tracking and
-  consent are ready. Keep this in the head: the CMP must load before the other tags.
+  Copy of the consent and analytics part of Site settings > Custom code > Head, as live on
+  cocos-organic.com. The rest of the Head block (font preconnects, twitter:card and the
+  Organization/WebSite JSON-LD) is not repeated here.
+
+  Keep the CMP first in the head: it has to load before the other tags so it can hold them back.
+
+  How consent works:
+  - Termageddon / Usercentrics settings ID ej6F3FADfoIfCM. Services (Google Analytics, Google Maps,
+    Campaign Monitor, Adobe Fonts, Cloudflare, Webflow and so on) are managed in Termageddon, not here.
+  - A script tagged type="text/plain" data-usercentrics="<service name>" is held back until the visitor
+    allows that service. The name must match the service name in Termageddon exactly.
+  - The stockist map waits for the "Google Maps" service in src/modules/stockist-map.js.
 -->
 
-<!-- CMP  -->
+<!-- CMP -->
 <link rel='preconnect' href='//privacy-proxy.usercentrics.eu'>
 <link rel='preload' href='//privacy-proxy.usercentrics.eu/latest/uc-block.bundle.js' as='script'>
 <script type='application/javascript' src='https://privacy-proxy.usercentrics.eu/latest/uc-block.bundle.js'></script>
-<script id='usercentrics-cmp'
-  src='https://app.usercentrics.eu/browser-ui/latest/loader.js'
-  data-settings-id='CHANGEME'
-  async>
-</script>
-<script>
-  uc.setCustomTranslations('https://termageddon.ams3.cdn.digitaloceanspaces.com/translations/');
-</script>
+<script id='usercentrics-cmp' src='https://app.usercentrics.eu/browser-ui/latest/loader.js' data-settings-id='ej6F3FADfoIfCM' async></script>
+<script>uc.setCustomTranslations('https://termageddon.ams3.cdn.digitaloceanspaces.com/translations/');</script>
 
-<!-- Google tag (gtag.js) + Ads -->
-<script
-  type="text/plain"
-  data-usercentrics="Google Analytics"
-  async
-  src="https://www.googletagmanager.com/gtag/js?id=G-CHANGEME">
-</script>
-<script
-  type="text/plain"
-  data-usercentrics="Google Analytics">
+<!-- Google Analytics (GA4): held back until the visitor allows the "Google Analytics" service -->
+<script type="text/plain" data-usercentrics="Google Analytics" async src="https://www.googletagmanager.com/gtag/js?id=G-Z4ZBHR8YEB"></script>
+<script type="text/plain" data-usercentrics="Google Analytics">
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-  gtag('config', 'G-CHANGEME');
-  gtag('config', 'AW-CHANGEME');
-</script>
-
-<!-- Microsoft Clarity -->
-<script
-  type="text/plain"
-  data-usercentrics="Microsoft Clarity">
-  (function(c,l,a,r,i,t,y){
-    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-    t=l.createElement(r); t.async=1;
-    t.src="https://www.clarity.ms/tag/"+i;
-    y=l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t,y);
-  })(window, document, "clarity", "script", "CHANGEME");
-</script>
-
-<!-- Meta Pixel Code -->
-<script
-  type="text/plain"
-  data-usercentrics="Facebook Pixel">
-  !function(f,b,e,v,n,t,s){
-    if(f.fbq)return; n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-    if(!f._fbq)f._fbq=n; n.push=n; n.loaded=!0; n.version='2.0';
-    n.queue=[]; t=b.createElement(e); t.async=!0;
-    t.src=v; s=b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t,s)
-  }(window, document,'script','https://connect.facebook.net/en_US/fbevents.js');
-
-  fbq('init', 'CHANGEME');
-  fbq('track', 'PageView');
+  gtag('config', 'G-Z4ZBHR8YEB');
 </script>
