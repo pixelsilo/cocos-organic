@@ -16,7 +16,9 @@
 //
 // Selected chips/radius buttons get the class "is-active" and aria-pressed="true".
 // Reads ?q= from the URL (set by the stockist-search module on other pages).
-// The Google Maps API and marker clusterer are loaded on this page only.
+// The Google Maps API and marker clusterer are loaded on this page only, and only after the visitor
+// allows the "Google Maps" service in the Usercentrics consent tool. Until then the search and the
+// list work as normal and the map area shows an "Allow Google Maps" prompt.
 
 const CLUSTERER = 'https://unpkg.com/@googlemaps/markerclusterer@2.5.3/dist/index.min.js';
 const UK = { lat: 54.2, lng: -2.5, zoom: 5 };
@@ -24,6 +26,72 @@ const PAGE = 12;
 const NEAR_ZOOM = 11;
 const DEFAULT_RADIUS = 10; // miles, used when no radius buttons exist
 const MILE = 1.609344;
+const MAPS_SERVICE = /google maps/i; // service name in the Usercentrics / Termageddon setup
+const PROMPT_DELAY = 3000; // ms to wait for the consent tool before showing the prompt anyway
+
+async function mapsService() {
+  try {
+    const uc = window.UC_UI;
+    if (!uc || !uc.isInitialized()) return null;
+    return (await uc.getServicesBaseInfo()).find((s) => MAPS_SERVICE.test(s.name)) || null;
+  } catch {
+    return null;
+  }
+}
+
+// Resolves once Google Maps is allowed. Checks on the consent tool's events and once a second as a
+// backstop. Calls onWait once, when there is a decision to make (or the tool is slow to start).
+function whenMapsAllowed(onWait) {
+  return new Promise((resolve) => {
+    const started = Date.now();
+    const events = ['UC_UI_INITIALIZED', 'UC_UI_CMP_EVENT', 'UC_CONSENT', 'ucEvent'];
+    let prompted = false;
+    let timer;
+    const check = async () => {
+      const svc = await mapsService();
+      if (svc?.consent?.status) {
+        clearInterval(timer);
+        events.forEach((e) => window.removeEventListener(e, check));
+        resolve();
+      } else if (!prompted && (svc || Date.now() - started > PROMPT_DELAY)) {
+        prompted = true;
+        onWait();
+      }
+    };
+    events.forEach((e) => window.addEventListener(e, check));
+    timer = setInterval(check, 1000);
+    check();
+  });
+}
+
+// Quiet panel in the map area, in the brand colours, with one button to allow Google Maps
+function showMapPrompt(mapEl) {
+  const box = document.createElement('div');
+  box.setAttribute('data-map-consent', '');
+  box.style.cssText = 'height:100%;min-height:16rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;padding:2rem;text-align:center;';
+  const text = document.createElement('p');
+  text.style.cssText = 'margin:0;max-width:24rem;';
+  text.textContent = 'The map is provided by Google Maps, which needs your permission. You can still search for stockists and use the list.';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'button';
+  const label = document.createElement('div');
+  label.className = 'text_optical';
+  label.textContent = 'Allow Google Maps';
+  btn.append(label);
+  btn.addEventListener('click', async () => {
+    const svc = await mapsService();
+    try {
+      if (svc && typeof window.UC_UI.acceptService === 'function') await window.UC_UI.acceptService(svc.id);
+      else window.UC_UI?.showSecondLayer?.();
+    } catch {
+      window.UC_UI?.showSecondLayer?.();
+    }
+  });
+  box.append(text, btn);
+  mapEl.textContent = '';
+  mapEl.append(box);
+}
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -176,58 +244,71 @@ export default async function stockistMap(root) {
 
   let data;
   try {
-    [data] = await Promise.all([fetch(api).then((r) => r.json()), loadGoogle(key)]);
+    data = await fetch(api).then((r) => r.json());
   } catch (err) {
     say('Sorry, we could not load the stockists. Please try again later.');
     throw err;
   }
 
   const all = data.locations;
-  const gm = window.google.maps;
   const c = brand();
-  const map = new gm.Map(mapEl, {
-    center: { lat: UK.lat, lng: UK.lng },
-    zoom: UK.zoom,
-    gestureHandling: 'cooperative',
-    mapTypeControl: false,
-    streetViewControl: false,
-    fullscreenControl: false,
-    styles: mapStyles(c),
-  });
-  const info = new gm.InfoWindow();
 
-  // Pin: berry teardrop with a cream ring and a hole in the middle
-  const pin = {
-    path: 'M12 22C12 22 4.5 14.6 4.5 9.2C4.5 5 7.9 1.7 12 1.7C16.1 1.7 19.5 5 19.5 9.2C19.5 14.6 12 22 12 22ZM12 6.2A3 3 0 1 0 12 12.2A3 3 0 1 0 12 6.2Z',
-    fillColor: c.berry,
-    fillOpacity: 1,
-    strokeColor: c.cream,
-    strokeWeight: 1.5,
-    scale: 1.5,
-    anchor: new gm.Point(12, 22),
-  };
+  // The map objects exist only once Google Maps has been allowed and loaded (see startMap below)
+  let gm = null;
+  let map = null;
+  let info = null;
+  let pin = null;
+  let clusterer = null;
 
-  // Cluster: berry disc with a cream ring and cream count, bigger for bigger clusters
-  const clusterer = new window.markerClusterer.MarkerClusterer({
-    map,
-    markers: [],
-    renderer: {
-      render: ({ count, position }) =>
-        new gm.Marker({
-          position,
-          zIndex: 1000 + count,
-          icon: {
-            path: gm.SymbolPath.CIRCLE,
-            scale: Math.min(15 + Math.sqrt(count) * 1.6, 32),
-            fillColor: c.berry,
-            fillOpacity: 1,
-            strokeColor: c.cream,
-            strokeWeight: 3,
-          },
-          label: { text: String(count), color: c.cream, fontSize: '13px', fontWeight: '700', fontFamily: c.font },
-        }),
-    },
-  });
+  async function startMap() {
+    await loadGoogle(key);
+    gm = window.google.maps;
+    mapEl.textContent = ''; // remove the consent prompt
+    map = new gm.Map(mapEl, {
+      center: { lat: UK.lat, lng: UK.lng },
+      zoom: UK.zoom,
+      gestureHandling: 'cooperative',
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: false,
+      styles: mapStyles(c),
+    });
+    info = new gm.InfoWindow();
+
+    // Pin: berry teardrop with a cream ring and a hole in the middle
+    pin = {
+      path: 'M12 22C12 22 4.5 14.6 4.5 9.2C4.5 5 7.9 1.7 12 1.7C16.1 1.7 19.5 5 19.5 9.2C19.5 14.6 12 22 12 22ZM12 6.2A3 3 0 1 0 12 12.2A3 3 0 1 0 12 6.2Z',
+      fillColor: c.berry,
+      fillOpacity: 1,
+      strokeColor: c.cream,
+      strokeWeight: 1.5,
+      scale: 1.5,
+      anchor: new gm.Point(12, 22),
+    };
+
+    // Cluster: berry disc with a cream ring and cream count, bigger for bigger clusters
+    clusterer = new window.markerClusterer.MarkerClusterer({
+      map,
+      markers: [],
+      renderer: {
+        render: ({ count, position }) =>
+          new gm.Marker({
+            position,
+            zIndex: 1000 + count,
+            icon: {
+              path: gm.SymbolPath.CIRCLE,
+              scale: Math.min(15 + Math.sqrt(count) * 1.6, 32),
+              fillColor: c.berry,
+              fillOpacity: 1,
+              strokeColor: c.cream,
+              strokeWeight: 3,
+            },
+            label: { text: String(count), color: c.cream, fontSize: '13px', fontWeight: '700', fontFamily: c.font },
+          }),
+      },
+    });
+    update(); // draw the pins for the current search
+  }
 
   // Current state
   let types = null; // null = all, else array of allowed types
@@ -240,6 +321,7 @@ export default async function stockistMap(root) {
   const allowed = (loc) => !types || types.includes(loc.t);
 
   function drawPins(list) {
+    if (!map) return;
     clusterer.clearMarkers();
     info.close();
     const markers = [];
@@ -286,12 +368,14 @@ export default async function stockistMap(root) {
         say(`Nothing within ${radius} miles of ${query}. Here are the nearest stockists.`);
       }
       drawPins(shown);
-      map.setCenter({ lat: point[0], lng: point[1] });
-      map.setZoom(NEAR_ZOOM);
-      if (shown.length) {
-        const bounds = new gm.LatLngBounds({ lat: point[0], lng: point[1] });
-        shown.slice(0, PAGE).forEach(({ loc }) => bounds.extend({ lat: loc.y, lng: loc.x }));
-        map.fitBounds(bounds, 40);
+      if (map) {
+        map.setCenter({ lat: point[0], lng: point[1] });
+        map.setZoom(NEAR_ZOOM);
+        if (shown.length) {
+          const bounds = new gm.LatLngBounds({ lat: point[0], lng: point[1] });
+          shown.slice(0, PAGE).forEach(({ loc }) => bounds.extend({ lat: loc.y, lng: loc.x }));
+          map.fitBounds(bounds, 40);
+        }
       }
     } else if (query) {
       const needle = query.toLowerCase();
@@ -302,8 +386,10 @@ export default async function stockistMap(root) {
       shown = pool.map((loc) => ({ loc, dist: null }));
       say(`${shown.length} stockists across the UK`);
       drawPins(shown);
-      map.setCenter({ lat: UK.lat, lng: UK.lng });
-      map.setZoom(UK.zoom);
+      if (map) {
+        map.setCenter({ lat: UK.lat, lng: UK.lng });
+        map.setZoom(UK.zoom);
+      }
     }
     render(true);
   }
@@ -376,4 +462,9 @@ export default async function stockistMap(root) {
   } else {
     update();
   }
+
+  // The list is live now; the map follows once Google Maps is allowed
+  whenMapsAllowed(() => showMapPrompt(mapEl))
+    .then(startMap)
+    .catch((err) => console.error('[cocos] map failed:', err));
 }
