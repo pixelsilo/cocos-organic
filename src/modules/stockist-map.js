@@ -105,7 +105,9 @@ function loadScript(src) {
 }
 
 async function loadGoogle(key) {
-  if (!window.google?.maps) {
+  // The consent tool leaves a placeholder google.maps in place while Maps is blocked, so look for the
+  // real API's version number rather than just google.maps
+  if (!window.google?.maps?.version) {
     await new Promise((resolve, reject) => {
       window.__cocosMapsReady = resolve;
       loadScript('https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(key) + '&callback=__cocosMapsReady&v=weekly').catch(reject);
