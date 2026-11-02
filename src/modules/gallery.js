@@ -54,8 +54,15 @@ export default function gallery(root) {
   });
   root.append(prev, next, dotsWrap);
 
+  // The photos start transparent and Webflow marks them lazy, so the browser may never fetch
+  // them. Once the page has loaded, load them all (about 100KB each) so a click shows one at once
+  const preload = () => photos.forEach((img) => (img.loading = 'eager'));
+  if (document.readyState === 'complete') setTimeout(preload, 300);
+  else window.addEventListener('load', () => setTimeout(preload, 300), { once: true });
+
   function show(i) {
     index = (i + slides.length) % slides.length;
+    if (photos[index - 1]) photos[index - 1].loading = 'eager';
     pot.classList.toggle('is-off', index !== 0);
     photos.forEach((img, k) => {
       const on = k + 1 === index;

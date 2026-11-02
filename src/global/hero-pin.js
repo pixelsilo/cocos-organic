@@ -28,12 +28,19 @@ export default function heroPin() {
     applyBottom();
   };
 
+  // The alert strip slides in after load and can be closed, which moves the bar without
+  // resizing it, so watch the strip as well and measure again once the page has loaded
+  const strip = nav.querySelector('.alert');
+
   both();
   if (typeof ResizeObserver !== 'undefined') {
     const ro = new ResizeObserver(both);
     ro.observe(nav);
     if (bar) ro.observe(bar);
+    if (strip) ro.observe(strip);
   }
+  if (strip && typeof MutationObserver !== 'undefined') new MutationObserver(both).observe(strip, { attributes: true });
+  window.addEventListener('load', both);
   window.addEventListener('resize', both);
   window.addEventListener('scroll', applyBottom, { passive: true });
 }
