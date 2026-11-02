@@ -6,6 +6,7 @@
 //   [data-rich="ingredients"]   <h3> subheads are ignored, every <li> becomes a recipeIngredient
 //   [data-rich="method"]        <h3> starts a HowToSection, every <p> is a HowToStep
 //   [data-recipe-time]          text like "30 mins" or "1 hour 10 mins" becomes totalTime (ISO 8601)
+//                               each step also gets a name (its first sentence) and a url to an #step-N anchor
 //   [data-recipe-category]      becomes recipeCategory
 //   [data-recipe-flavour]       its text (or attribute value) becomes keywords with "coconut yog recipe"
 
@@ -20,15 +21,27 @@ function duration(raw) {
   return `PT${h ? `${h[1]}H` : ''}${m ? `${m[1]}M` : ''}`;
 }
 
+// A short title for a step: its first sentence, cut at a word boundary if it runs long
+function stepName(s) {
+  const first = s.split(/(?<=[.!?])\s/)[0].replace(/[.!?]+$/, '');
+  if (first.length <= 70) return first;
+  return first.slice(0, 70).replace(/\s+\S*$/, '') + '…';
+}
+
 function steps(method) {
   const sections = [];
   let current = { name: '', steps: [] };
+  const page = location.origin + location.pathname;
+  let n = 0;
   method.querySelectorAll('h2, h3, h4, p, li').forEach((el) => {
     if (/^H\d$/.test(el.tagName)) {
       if (current.steps.length) sections.push(current);
       current = { name: text(el), steps: [] };
     } else if (text(el)) {
-      current.steps.push({ '@type': 'HowToStep', text: text(el) });
+      // Each step gets an anchor on the page, so its url points at the step itself
+      n += 1;
+      if (!el.id) el.id = `step-${n}`;
+      current.steps.push({ '@type': 'HowToStep', name: stepName(text(el)), text: text(el), url: `${page}#${el.id}` });
     }
   });
   if (current.steps.length) sections.push(current);
