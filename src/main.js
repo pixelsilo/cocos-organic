@@ -18,13 +18,14 @@ import stockistSearch from './modules/stockist-search.js';
 import stockistMap from './modules/stockist-map.js';
 import recipeFilter from './modules/recipe-filter.js';
 import faqSearch from './modules/faq-search.js';
+import gallery from './modules/gallery.js';
 import newsletter from './modules/newsletter.js';
 
 // Site-wide behaviour that runs on every page
 const GLOBALS = [copyrightYear, navScrolled, formPlaceholders, heroPin, opticalFields, hideEmpty, schemaClean, schemaRecipe, schemaPost, schemaFaq, schemaList, heroReveal];
 
 // Opt-in modules, mounted on [data-module="<name>"] roots
-const MODULES = { accordion, alert: alertBar, range, marquee, 'stockist-search': stockistSearch, 'stockist-map': stockistMap, 'recipe-filter': recipeFilter, 'faq-search': faqSearch, newsletter };
+const MODULES = { accordion, alert: alertBar, range, marquee, 'stockist-search': stockistSearch, 'stockist-map': stockistMap, 'recipe-filter': recipeFilter, 'faq-search': faqSearch, newsletter, gallery };
 
 function boot() {
   GLOBALS.forEach((init) => {
