@@ -7,6 +7,8 @@
 //         .range_tab-label                     gets .is-inactive when not selected
 //         [data-range-fill]                    progress bar fill, width driven here
 //     .w-dyn-item                              list item wrapping a [data-range="Coconut Yog"] card
+//     [data-range-panel="Kids"]                optional static panel for a tab with no cards (the Kids
+//                                              range); shown when its tab is picked, hidden otherwise
 //
 // Autoplay advances to the next tab once the fill completes. Hovering or focusing the
 // section does NOT pause it; only picking a tab does. The picked tab then holds (fill
@@ -37,6 +39,7 @@ export default function range(root) {
   let raf = 0;
 
   const items = cards.map((card) => card.closest('.w-dyn-item') || card);
+  const panels = [...root.querySelectorAll('[data-range-panel]')];
   const list = items[0].parentElement;
   let shown = null; // range currently on screen
   let swapId = 0; // invalidates an in-flight card transition
@@ -48,7 +51,11 @@ export default function range(root) {
   function swapCards(name, animate) {
     const id = ++swapId;
     const next = items.filter((_, k) => cards[k].dataset.range === name);
-    const apply = () => items.forEach((item) => (item.hidden = !next.includes(item)));
+    const nextPanels = panels.filter((panel) => panel.dataset.rangePanel === name);
+    const apply = () => {
+      items.forEach((item) => (item.hidden = !next.includes(item)));
+      panels.forEach((panel) => (panel.hidden = !nextPanels.includes(panel)));
+    };
     const previous = shown;
     shown = name;
 
@@ -62,7 +69,7 @@ export default function range(root) {
     gsap.killTweensOf(list);
     const fromHeight = list.getBoundingClientRect().height;
     list.style.height = `${fromHeight}px`; // freeze while the old cards fade out
-    animateOut(items.filter((item) => !item.hidden)).then(() => {
+    animateOut([...items, ...panels].filter((el) => !el.hidden)).then(() => {
       if (id !== swapId) return; // a newer pick took over
       apply();
       // New natural height, measured without painting, then glide there from the old one
@@ -77,7 +84,7 @@ export default function range(root) {
         ease: 'power2.inOut',
         onComplete: () => (list.style.height = ''),
       });
-      animateIn(next, { y: 1, duration: 0.7, stagger: 0.08, delay: 0.1 });
+      animateIn([...next, ...nextPanels], { y: 1, duration: 0.7, stagger: 0.08, delay: 0.1 });
     });
   }
 
